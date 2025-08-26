@@ -1,0 +1,63 @@
+library(maxLik)
+
+# Simulation of first mixture component
+n <- 30
+alpha <- 0.2
+kappa <- 2.879
+lambda <- 0.663
+u <- runif(n, 0, 1)
+T <- (log(1/(1-u))^(1/alpha))^(1/kappa)
+Y <- T/(T+1)
+x <- -log(1-Y)/lambda
+
+# MLE for first component
+logLikFun1 <- function(param){
+  alpha <- param[1]
+  kappa <- param[2]
+  lambda <- param[3]
+  f1 <- alpha*kappa*lambda^kappa * x^(kappa-1) * exp(-(lambda*x)^kappa) * (1 - exp(-(lambda*x)^kappa))^(alpha-1)
+  return(sum(log(f1)))
+}
+mle1 <- maxLik(logLik = logLikFun1, start = c(alpha=0.2, kappa=2.879, lambda=0.663), method="BFGS")
+summary(mle1)
+
+# Simulation of second mixture component
+a <- 0.2
+k <- 2.979
+l <- 0.763
+u <- runif(n,0,1)
+T <- (log(1/(1-u))^(1/a))^(1/k)
+Y <- T/(T+1)
+y1 <- -log(1-Y)/l
+
+# MLE for second component
+logLikFun2 <- function(param){
+  a <- param[1]
+  k <- param[2]
+  l <- param[3]
+  f1 <- a*k*l^k*y1^(k-1) * exp(-(l*y1)^k) * (1 - exp(-(l*y1)^k))^(a-1)
+  return(sum(log(f1)))
+}
+mle2 <- maxLik(logLik = logLikFun2, start = c(a=0.2, k=2.979, l=0.763), method="BFGS")
+summary(mle2)
+
+# MLE for mixture of two components
+logLikFunMix <- function(param){
+  alpha <- param[1]
+  kappa <- param[2]
+  lambda <- param[3]
+  a <- param[4]
+  k <- param[5]
+  l <- param[6]
+  w <- param[7]
+  
+  f1 <- alpha*kappa*lambda^kappa * x^(kappa-1) * exp(-(lambda*x)^kappa) * (1 - exp(-(lambda*x)^kappa))^(alpha-1)
+  f2 <- a*k*l^k*y1^(k-1) * exp(-(l*y1)^k) * (1 - exp(-(l*y1)^k))^(a-1)
+  
+  return(sum(log(w*f1 + (1-w)*f2)))
+}
+
+mleMix <- maxLik(logLik = logLikFunMix, start=c(alpha=0.04744,kappa=2.961,lambda=0.4387,a=0.04293,k=2.970,l=0.7411,w=0.3), method="BFGS")
+summary(mleMix)
+coef(mleMix)
+stdEr(mleMix)
